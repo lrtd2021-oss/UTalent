@@ -45,6 +45,10 @@ class BuscadorService
                 $fuenteEmpleo->tipo(),
             );
 
+            if (! $fuente->activa) {
+                continue;
+            }
+
             try {
                 foreach ($fuenteEmpleo->buscar($termino) as $ofertaDTO) {
                     $this->ofertaRepository->guardarDesdeFuente($fuente, $ofertaDTO);

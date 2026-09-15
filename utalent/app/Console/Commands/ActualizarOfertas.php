@@ -2,29 +2,27 @@
 
 namespace App\Console\Commands;
 
-use App\Services\BuscadorService;
+use App\Jobs\ActualizarOfertasJob;
 use Illuminate\Console\Command;
 
 /**
- * Dispara manualmente una actualizacion de ofertas para un termino de
- * busqueda. Sirve para probar la vertical completa (fuente -> normalizacion
- * -> persistencia) sin depender todavia de Queue/Scheduler.
+ * Herramienta manual para despachar una actualizacion de ofertas sin esperar
+ * al Scheduler. El procesamiento real ocurre en la cola: hace falta un
+ * worker corriendo (php artisan queue:work) para que se ejecute.
  */
 class ActualizarOfertas extends Command
 {
     protected $signature = 'buscador:actualizar {termino}';
 
-    protected $description = 'Consulta las fuentes de empleo activas por un termino y guarda los resultados';
+    protected $description = 'Despacha un Job para actualizar las ofertas de un termino de busqueda';
 
-    public function handle(BuscadorService $buscadorService): int
+    public function handle(): int
     {
         $termino = $this->argument('termino');
 
-        $this->info("Buscando '{$termino}' en las fuentes activas...");
+        ActualizarOfertasJob::dispatch($termino);
 
-        $cantidad = $buscadorService->actualizarDesdeTermino($termino);
-
-        $this->info("Listo: {$cantidad} ofertas guardadas o actualizadas.");
+        $this->info("Job despachado para '{$termino}'. Procesalo con: php artisan queue:work --once");
 
         return self::SUCCESS;
     }

@@ -91,4 +91,53 @@ class BuscadorServiceResilienciaTest extends TestCase
         $this->assertDatabaseHas('fuentes', ['nombre' => 'fuente_caida']);
         $this->assertDatabaseHas('fuentes', ['nombre' => 'fuente_ok']);
     }
+
+    public function test_una_fuente_inactiva_no_es_consultada(): void
+    {
+        Fuente::create([
+            'nombre' => 'fuente_inactiva',
+            'nombre_visible' => 'Fuente Inactiva (prueba)',
+            'tipo' => 'privado',
+            'activa' => false,
+        ]);
+
+        $fuenteQueNoDeberiaConsultarse = new class implements FuenteEmpleoInterface
+        {
+            public bool $fueConsultada = false;
+
+            public function nombre(): string
+            {
+                return 'fuente_inactiva';
+            }
+
+            public function nombreVisible(): string
+            {
+                return 'Fuente Inactiva (prueba)';
+            }
+
+            public function tipo(): string
+            {
+                return 'privado';
+            }
+
+            public function buscar(string $termino): array
+            {
+                $this->fueConsultada = true;
+
+                return [];
+            }
+        };
+
+        $buscadorService = new BuscadorService(
+            fuentesEmpleo: [$fuenteQueNoDeberiaConsultarse],
+            fuenteRepository: new EloquentFuenteRepository(),
+            ofertaRepository: new EloquentOfertaRepository(),
+            sinonimoRepository: new EloquentSinonimoRepository(),
+        );
+
+        $guardadas = $buscadorService->actualizarDesdeTermino('Programador');
+
+        $this->assertSame(0, $guardadas);
+        $this->assertFalse($fuenteQueNoDeberiaConsultarse->fueConsultada);
+    }
 }

@@ -113,6 +113,8 @@ class UruguayConcursaFuente implements FuenteEmpleoInterface
      */
     private function extraerDepartamento(string $lugarDesempeno): ?string
     {
+        $lugarDesempeno = trim($lugarDesempeno);
+
         if ($lugarDesempeno === '') {
             return null;
         }
@@ -123,6 +125,6 @@ class UruguayConcursaFuente implements FuenteEmpleoInterface
             }
         }
 
-        return trim($lugarDesempeno);
+        return $lugarDesempeno;
     }
 }
