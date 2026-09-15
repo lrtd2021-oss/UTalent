@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Fuentes\OfertaDTO;
 use App\Models\Fuente;
 use App\Models\Oferta;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface OfertaRepositoryInterface
 {
@@ -15,6 +15,13 @@ interface OfertaRepositoryInterface
      */
     public function guardarDesdeFuente(Fuente $fuente, OfertaDTO $ofertaDTO): Oferta;
 
-    /** Ofertas activas cuyo titulo contenga alguno de los terminos dados. */
-    public function buscarPorTitulo(array $terminos): Collection;
+    /**
+     * Ofertas activas que coincidan con alguno de los $terminos (titulo) y
+     * cumplan los $filtros dados. $terminos vacio no filtra por titulo;
+     * $filtros vacio no aplica ningun filtro adicional.
+     *
+     * Claves posibles de $filtros: es_publico, salario_visible, modalidad,
+     * departamento.
+     */
+    public function buscar(array $terminos, array $filtros): LengthAwarePaginator;
 }

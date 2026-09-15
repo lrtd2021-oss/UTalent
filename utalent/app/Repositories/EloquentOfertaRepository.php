@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Fuentes\OfertaDTO;
 use App\Models\Fuente;
 use App\Models\Oferta;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class EloquentOfertaRepository implements OfertaRepositoryInterface
 {
@@ -30,16 +30,22 @@ class EloquentOfertaRepository implements OfertaRepositoryInterface
         );
     }
 
-    public function buscarPorTitulo(array $terminos): Collection
+    public function buscar(array $terminos, array $filtros): LengthAwarePaginator
     {
         return Oferta::with('fuente')
             ->where('estado', 'activa')
-            ->where(function ($query) use ($terminos) {
-                foreach ($terminos as $termino) {
-                    $query->orWhere('titulo', 'like', "%{$termino}%");
-                }
+            ->when($terminos, function ($query) use ($terminos) {
+                $query->where(function ($query) use ($terminos) {
+                    foreach ($terminos as $termino) {
+                        $query->orWhere('titulo', 'like', "%{$termino}%");
+                    }
+                });
             })
+            ->when(array_key_exists('es_publico', $filtros), fn ($query) => $query->where('es_publico', $filtros['es_publico']))
+            ->when(array_key_exists('salario_visible', $filtros), fn ($query) => $query->where('salario_visible', $filtros['salario_visible']))
+            ->when(! empty($filtros['modalidad']), fn ($query) => $query->where('modalidad', $filtros['modalidad']))
+            ->when(! empty($filtros['departamento']), fn ($query) => $query->where('departamento', $filtros['departamento']))
             ->latest('fecha_publicacion')
-            ->get();
+            ->paginate();
     }
 }

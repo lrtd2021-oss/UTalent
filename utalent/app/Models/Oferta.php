@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Oferta extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'fuente_id', 'external_id', 'titulo', 'empresa', 'departamento',
         'es_publico', 'salario_visible', 'salario_texto', 'modalidad', 'url',

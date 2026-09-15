@@ -6,7 +6,7 @@ use App\Fuentes\FuenteEmpleoInterface;
 use App\Repositories\FuenteRepositoryInterface;
 use App\Repositories\OfertaRepositoryInterface;
 use App\Repositories\SinonimoRepositoryInterface;
-use Illuminate\Support\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -64,11 +64,18 @@ class BuscadorService
         return $ofertasGuardadas;
     }
 
-    /** Ofertas ya guardadas localmente que coincidan con $termino o sus sinonimos. */
-    public function buscar(string $termino): Collection
+    /**
+     * Ofertas ya guardadas localmente que coincidan con $termino (o sus
+     * sinonimos) y cumplan $filtros. No consulta ninguna fuente externa: lee
+     * exclusivamente de la base de datos.
+     *
+     * Claves posibles de $filtros: es_publico, salario_visible, modalidad,
+     * departamento.
+     */
+    public function buscar(?string $termino, array $filtros = []): LengthAwarePaginator
     {
-        $terminos = $this->sinonimoRepository->terminosRelacionados($termino);
+        $terminos = filled($termino) ? $this->sinonimoRepository->terminosRelacionados($termino) : [];
 
-        return $this->ofertaRepository->buscarPorTitulo($terminos);
+        return $this->ofertaRepository->buscar($terminos, $filtros);
     }
 }
