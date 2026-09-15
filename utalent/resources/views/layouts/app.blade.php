@@ -42,8 +42,12 @@
     </footer>
 
     <script>
-        document.getElementById('menu-toggle')?.addEventListener('click', () => {
-            document.getElementById('menu-mobile').classList.toggle('hidden');
+        const menuToggle = document.getElementById('menu-toggle');
+        const menuMobile = document.getElementById('menu-mobile');
+
+        menuToggle?.addEventListener('click', () => {
+            const oculto = menuMobile.classList.toggle('hidden');
+            menuToggle.setAttribute('aria-expanded', oculto ? 'false' : 'true');
         });
     </script>
 </body>

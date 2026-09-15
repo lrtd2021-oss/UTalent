@@ -28,15 +28,15 @@
 
     <section class="max-w-5xl mx-auto px-4 py-12 grid gap-6 sm:grid-cols-3">
         <div class="bg-white rounded-lg border border-slate-200 p-6">
-            <p class="text-accent font-bold text-2xl mb-1">2 fuentes</p>
+            <p class="text-accent-text font-bold text-2xl mb-1">2 fuentes</p>
             <p class="text-slate-600 text-sm">Empleo público (Uruguay Concursa) y privado (BuscoJobs) en un solo buscador.</p>
         </div>
         <div class="bg-white rounded-lg border border-slate-200 p-6">
-            <p class="text-accent font-bold text-2xl mb-1">Filtros que importan</p>
+            <p class="text-accent-text font-bold text-2xl mb-1">Filtros que importan</p>
             <p class="text-slate-600 text-sm">Público o privado, salario visible, modalidad y departamento — sin ruido.</p>
         </div>
         <div class="bg-white rounded-lg border border-slate-200 p-6">
-            <p class="text-accent font-bold text-2xl mb-1">Pensado para IT</p>
+            <p class="text-accent-text font-bold text-2xl mb-1">Pensado para IT</p>
             <p class="text-slate-600 text-sm">Enfocado en tecnología: desarrollo, soporte, redes, bases de datos y más.</p>
         </div>
     </section>

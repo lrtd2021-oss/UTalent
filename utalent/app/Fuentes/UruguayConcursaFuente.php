@@ -85,7 +85,12 @@ class UruguayConcursaFuente implements FuenteEmpleoInterface
             esPublico: true,
             salarioVisible: filled($salarioTexto),
             salarioTexto: $salarioTexto,
-            modalidad: 'Postulación online (portal Uruguay Concursa)',
+            // Uruguay Concursa no publica la modalidad laboral (remoto,
+            // hibrido, presencial) de sus llamados: "null" es la unica
+            // representacion honesta. No inventar un valor (Fase 9.1): el
+            // frontend ya oculta el badge y el filtro de modalidad cuando
+            // el dato no existe.
+            modalidad: null,
             url: 'https://uruguayconcursa.gub.uy/llamado/'.$llamado['LlaId'],
             fechaPublicacion: $this->nuloSiVacio($llamado['LlaFchApeIns'] ?? null),
             fechaCierre: $this->nuloSiVacio($llamado['LlaFchCieIns'] ?? null),

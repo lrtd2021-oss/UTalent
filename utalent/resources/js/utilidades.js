@@ -33,6 +33,12 @@ export function badgeModalidad(modalidad) {
     return `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium ${clase}">${escaparHtml(modalidad)}</span>`;
 }
 
+export function badgeAntigua(esAntigua) {
+    return esAntigua
+        ? '<span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Oferta antigua</span>'
+        : '';
+}
+
 export function textoEmpresa(oferta) {
     return oferta.empresa ? escaparHtml(oferta.empresa) : '<span class="italic text-slate-400">Empresa confidencial</span>';
 }

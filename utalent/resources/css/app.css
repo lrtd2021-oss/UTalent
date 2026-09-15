@@ -13,4 +13,25 @@
     --color-primary: #14213d;
     --color-accent: #2dd4bf;
     --color-accent-warm: #fca311;
+
+    /* Variante mas oscura de --color-accent, exclusiva para texto y foco
+       sobre fondos claros: --color-accent sobre blanco da 1.86:1 (falla
+       WCAG AA); esta variante da 5.47:1 (Fase 9.1). */
+    --color-accent-text: #0f766e;
+}
+
+/*
+ * Foco de teclado visible y consistente (Fase 9.1). Sin esta regla, cada
+ * navegador muestra su propio foco por defecto (Preflight solo lo restaura
+ * para Firefox); esto lo unifica con la paleta en todos los navegadores sin
+ * quitarle el foco a ningun elemento interactivo.
+ */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+    outline: 2px solid var(--color-accent-text);
+    outline-offset: 2px;
 }

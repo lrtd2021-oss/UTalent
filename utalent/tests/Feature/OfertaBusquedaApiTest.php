@@ -70,6 +70,22 @@ class OfertaBusquedaApiTest extends TestCase
             ->assertJsonPath('data.0.titulo', 'Remota');
     }
 
+    /**
+     * Fase 9.1: una oferta sin modalidad conocida (ej. Uruguay Concursa) no
+     * debe aparecer nunca al filtrar por una modalidad concreta - el filtro
+     * no debe inventar coincidencias con datos que no existen.
+     */
+    public function test_una_oferta_sin_modalidad_no_coincide_con_ningun_filtro_de_modalidad(): void
+    {
+        Oferta::factory()->create(['titulo' => 'Sin modalidad conocida', 'modalidad' => null]);
+        Oferta::factory()->create(['titulo' => 'Presencial', 'modalidad' => 'Presencial']);
+
+        $this->getJson('/api/ofertas?modalidad=Presencial')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.titulo', 'Presencial');
+    }
+
     public function test_filtra_por_departamento(): void
     {
         Oferta::factory()->create(['titulo' => 'En Montevideo', 'departamento' => 'Montevideo']);
@@ -136,6 +152,27 @@ class OfertaBusquedaApiTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.titulo', 'Oferta activa');
+    }
+
+    /**
+     * Fase 9.1: la señal visual de "oferta antigua" es independiente del
+     * cierre real. Una oferta con años de antigüedad, mientras la fuente la
+     * siga reportando como vigente (estado=activa), debe seguir apareciendo
+     * en los resultados de búsqueda igual que cualquier otra.
+     */
+    public function test_una_oferta_antigua_sigue_apareciendo_en_los_resultados_mientras_este_activa(): void
+    {
+        Oferta::factory()->create([
+            'titulo' => 'Programador IV',
+            'estado' => 'activa',
+            'fecha_publicacion' => now()->subYears(3),
+        ]);
+
+        $this->getJson('/api/ofertas?q=Programador')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.titulo', 'Programador IV')
+            ->assertJsonPath('data.0.es_antigua', true);
     }
 
     public function test_la_busqueda_no_genera_ningun_trafico_de_red(): void

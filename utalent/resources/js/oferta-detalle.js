@@ -1,5 +1,5 @@
 import api from './api';
-import { badgeSector, badgeModalidad, textoEmpresa, textoSalario, formatearFecha, escaparHtml } from './utilidades';
+import { badgeSector, badgeModalidad, badgeAntigua, textoEmpresa, textoSalario, formatearFecha, escaparHtml } from './utilidades';
 
 const contenedor = document.getElementById('detalle');
 const id = contenedor.dataset.ofertaId;
@@ -22,7 +22,7 @@ function pintarOferta(oferta) {
     const seniority = oferta.seniority
         ? `<span class="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">${escaparHtml(oferta.seniority)}</span>`
         : '';
-    document.getElementById('badges').innerHTML = `${badgeSector(oferta.es_publico)}${badgeModalidad(oferta.modalidad)}${seniority}`;
+    document.getElementById('badges').innerHTML = `${badgeSector(oferta.es_publico)}${badgeModalidad(oferta.modalidad)}${seniority}${badgeAntigua(oferta.es_antigua)}`;
 
     document.getElementById('titulo').textContent = oferta.titulo;
     document.getElementById('empresa-departamento').innerHTML = `${textoEmpresa(oferta)} · ${escaparHtml(oferta.departamento ?? 'Uruguay')}`;

@@ -30,6 +30,24 @@ class OfertaDetalleApiTest extends TestCase
             ->assertJsonPath('estado', 'cerrada');
     }
 
+    public function test_expone_es_antigua_para_una_oferta_de_publicacion_reciente(): void
+    {
+        $oferta = Oferta::factory()->create(['fecha_publicacion' => now()->subDays(10)]);
+
+        $this->getJson("/api/ofertas/{$oferta->id}")
+            ->assertOk()
+            ->assertJsonPath('es_antigua', false);
+    }
+
+    public function test_expone_es_antigua_para_una_oferta_de_publicacion_muy_vieja(): void
+    {
+        $oferta = Oferta::factory()->create(['fecha_publicacion' => now()->subYears(2)]);
+
+        $this->getJson("/api/ofertas/{$oferta->id}")
+            ->assertOk()
+            ->assertJsonPath('es_antigua', true);
+    }
+
     public function test_una_oferta_inexistente_devuelve_404_json(): void
     {
         $this->getJson('/api/ofertas/999999')

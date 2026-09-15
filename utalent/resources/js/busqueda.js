@@ -1,5 +1,5 @@
 import api from './api';
-import { badgeSector, badgeModalidad, textoEmpresa, textoSalario, formatearFecha, escaparHtml } from './utilidades';
+import { badgeSector, badgeModalidad, badgeAntigua, textoEmpresa, textoSalario, formatearFecha, escaparHtml } from './utilidades';
 
 const form = document.getElementById('form-filtros');
 const listaResultados = document.getElementById('lista-resultados');
@@ -79,6 +79,7 @@ function tarjetaOferta(oferta) {
                 ${badgeSector(oferta.es_publico)}
                 ${badgeModalidad(oferta.modalidad)}
                 ${seniority}
+                ${badgeAntigua(oferta.es_antigua)}
             </div>
             <h3 class="font-bold text-slate-900">${escaparHtml(oferta.titulo)}</h3>
             <p class="text-sm text-slate-500 mt-0.5">
@@ -116,7 +117,7 @@ function renderizarPaginacion(datos) {
     paginacion.append(anterior, info, siguiente);
 }
 
-function buscar(pagina = 1) {
+function buscar(pagina = 1, deberiaDesplazar = true) {
     const filtros = filtrosDelFormulario();
     paginaActual = pagina;
     actualizarUrl(filtros, pagina);
@@ -136,7 +137,12 @@ function buscar(pagina = 1) {
             datos.data.forEach((oferta) => listaResultados.appendChild(tarjetaOferta(oferta)));
             renderizarPaginacion(datos);
             mostrarEstado('resultados');
-            listaResultados.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // La carga inicial de la pagina no debe mover el scroll: solo
+            // una accion real del usuario (buscar, filtrar, paginar) lo hace.
+            if (deberiaDesplazar) {
+                listaResultados.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         })
         .catch(() => {
             resumen.textContent = '';
@@ -169,4 +175,4 @@ document.getElementById('btn-reintentar').addEventListener('click', () => buscar
 
 const filtrosIniciales = leerFiltrosDeUrl();
 precargarFormulario(filtrosIniciales);
-buscar(filtrosIniciales.page);
+buscar(filtrosIniciales.page, false);
