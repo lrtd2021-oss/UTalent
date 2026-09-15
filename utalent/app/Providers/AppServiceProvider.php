@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Fuentes\BuscoJobsFuente;
 use App\Fuentes\UruguayConcursaFuente;
 use App\IA\NormalizadorIAInterface;
 use App\IA\OpenRouterNormalizadorIA;
@@ -33,7 +34,10 @@ class AppServiceProvider extends ServiceProvider
         // es agregarla a este arreglo (y crear su propia implementacion de
         // FuenteEmpleoInterface); nada mas del sistema cambia.
         $this->app->bind(BuscadorService::class, fn ($app) => new BuscadorService(
-            fuentesEmpleo: [$app->make(UruguayConcursaFuente::class)],
+            fuentesEmpleo: [
+                $app->make(UruguayConcursaFuente::class),
+                $app->make(BuscoJobsFuente::class),
+            ],
             fuenteRepository: $app->make(FuenteRepositoryInterface::class),
             ofertaRepository: $app->make(OfertaRepositoryInterface::class),
             sinonimoRepository: $app->make(SinonimoRepositoryInterface::class),
