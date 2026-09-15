@@ -1,59 +1,58 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# UTalent
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Buscador de oportunidades laborales en Tecnologías de la Información para estudiantes y egresados de UTU. Agrega ofertas de Uruguay Concursa (público) y BuscoJobs Uruguay (privado) en un único buscador con filtros por sector, salario visible, modalidad y departamento.
 
-## About Laravel
+Cuarto Práctico de Programación Full-Stack — Esc. Técnica Rocha (UTU), 2026. Documentación completa (arquitectura, diagrama de clases, decisiones técnicas, uso de IA) en [`../documentación/UTalent_Documentacion.pdf`](../documentación/UTalent_Documentacion.pdf).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Requisitos
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- PHP 8.2+ con extensión `pdo_sqlite`
+- Composer
+- Node.js + npm
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+No hace falta MySQL, PostgreSQL, Redis ni Memcached: la base de datos es un único archivo SQLite y la cola usa el driver `database`.
 
-## Learning Laravel
+## Instalación
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+```bash
+composer setup
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Este comando instala dependencias PHP, copia `.env.example` a `.env`, genera `APP_KEY`, corre las migraciones y compila el frontend (`npm install` + `npm run build`).
 
-## Laravel Sponsors
+## Generar datos reales
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Un proyecto recién clonado no tiene ofertas: hay que correr al menos un barrido contra las fuentes reales. La cola usa el driver `database` (no `sync`), así que un Job despachado necesita un worker corriendo para ejecutarse:
 
-### Premium Partners
+```bash
+php artisan buscador:actualizar-todo   # despacha el barrido completo
+php artisan queue:work --once          # lo procesa
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Levantar el proyecto
 
-## Contributing
+```bash
+composer dev
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Levanta en paralelo el servidor (`php artisan serve`), un worker de cola (`queue:listen`), el visor de logs (`pail`) y Vite en modo watch.
 
-## Code of Conduct
+## Tests
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+php artisan test
+```
 
-## Security Vulnerabilities
+## Variables de entorno relevantes
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| Variable | Rol |
+|---|---|
+| `DB_CONNECTION=sqlite` | Base de datos en un único archivo (`database/database.sqlite`) |
+| `QUEUE_CONNECTION=database` | Los Jobs se procesan por un worker, no en el mismo request |
+| `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` | Opcionales — sin configurar, el sistema guarda ofertas normalmente, solo sin enriquecer con seniority/tecnologías |
 
-## License
+Ninguna de estas variables, ni `.env`, se sube al repositorio.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Arquitectura (resumen)
+
+MVC (Laravel) + Strategy (`FuenteEmpleoInterface`, una implementación por fuente) + Repository (persistencia aislada detrás de interfaces) + un Service orquestador (`BuscadorService`). El detalle completo, con el diagrama de clases actualizado contra el código real, está en la documentación del proyecto (enlace arriba).
