@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Oferta;
 use App\Services\BuscadorService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -51,5 +52,16 @@ class OfertaController extends Controller
         }
 
         return response()->json($this->buscadorService->buscar($validado['q'] ?? null, $filtros));
+    }
+
+    /**
+     * A diferencia de index(), devuelve la oferta este activa o cerrada: el
+     * detalle debe poder mostrar "ya no esta disponible" en vez de un 404
+     * para algo que existio. Una oferta inexistente si sigue dando 404
+     * (route model binding se encarga solo).
+     */
+    public function show(Oferta $oferta): JsonResponse
+    {
+        return response()->json($oferta->load('fuente'));
     }
 }

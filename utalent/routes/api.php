@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 // Busqueda del usuario final: solo lee de la base local, nunca consulta
 // fuentes externas ni despacha Jobs.
 Route::get('ofertas', [OfertaController::class, 'index']);
+Route::get('ofertas/{oferta}', [OfertaController::class, 'show']);
 
 // ABM del motor de busqueda: administracion de fuentes y sinonimos.
 // No incluye "show" porque los controladores no lo implementan todavia.
