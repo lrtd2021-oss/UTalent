@@ -213,4 +213,160 @@ class BuscoJobsFuenteTest extends TestCase
 
         $this->assertSame([], (new BuscoJobsFuente())->buscar('UnTerminoRarisimo'));
     }
+
+    /**
+     * Fase 9.2: el listado de BuscoJobs trunca la descripcion a 150
+     * caracteres. Estas pruebas usan un patron de URL distinto para el
+     * listado ('*_next/data/*ofertas/*') y para el detalle
+     * ('*oferta-ID-*') porque ambos endpoints viven bajo "_next/data" y,
+     * sin distinguirlos, el fake del listado interceptaria tambien la
+     * peticion de detalle.
+     */
+    private function descripcionTruncada(): string
+    {
+        // 147 caracteres + "..." = 150, el mismo patron verificado contra
+        // el sitio real: exactamente 150 caracteres terminados en "...".
+        return str_repeat('a', 147).'...';
+    }
+
+    public function test_descripcion_truncada_con_detalle_valido_guarda_la_descripcion_completa(): void
+    {
+        $descripcionCompleta = str_repeat('Descripcion completa y detallada de la oferta. ', 5);
+
+        Http::fake([
+            '*buscojobs.com.uy/ofertas/*' => Http::response($this->htmlConBuildId('build-abc')),
+            '*/_next/data/*/ofertas/*' => Http::response($this->jsonConOfertas([
+                $this->ofertaDeEjemplo(['Descripcion' => $this->descripcionTruncada()]),
+            ])),
+            '*oferta-ID-*' => Http::response([
+                'pageProps' => ['oferta' => ['Descripcion' => $descripcionCompleta]],
+            ]),
+        ]);
+
+        $oferta = (new BuscoJobsFuente())->buscar('Programador')[0];
+
+        $this->assertSame($descripcionCompleta, $oferta->descripcionCruda);
+    }
+
+    public function test_descripcion_truncada_con_detalle_404_conserva_la_descripcion_truncada(): void
+    {
+        $descripcionTruncada = $this->descripcionTruncada();
+
+        Http::fake([
+            '*buscojobs.com.uy/ofertas/*' => Http::response($this->htmlConBuildId('build-abc')),
+            '*/_next/data/*/ofertas/*' => Http::response($this->jsonConOfertas([
+                $this->ofertaDeEjemplo(['Descripcion' => $descripcionTruncada]),
+            ])),
+            '*oferta-ID-*' => Http::response(['notFound' => true], 404),
+        ]);
+
+        $oferta = (new BuscoJobsFuente())->buscar('Programador')[0];
+
+        $this->assertSame($descripcionTruncada, $oferta->descripcionCruda);
+    }
+
+    public function test_descripcion_truncada_con_detalle_500_conserva_la_descripcion_truncada(): void
+    {
+        $descripcionTruncada = $this->descripcionTruncada();
+
+        Http::fake([
+            '*buscojobs.com.uy/ofertas/*' => Http::response($this->htmlConBuildId('build-abc')),
+            '*/_next/data/*/ofertas/*' => Http::response($this->jsonConOfertas([
+                $this->ofertaDeEjemplo(['Descripcion' => $descripcionTruncada]),
+            ])),
+            '*oferta-ID-*' => Http::response(status: 500),
+        ]);
+
+        $oferta = (new BuscoJobsFuente())->buscar('Programador')[0];
+
+        $this->assertSame($descripcionTruncada, $oferta->descripcionCruda);
+    }
+
+    public function test_detalle_con_json_invalido_conserva_la_descripcion_truncada(): void
+    {
+        $descripcionTruncada = $this->descripcionTruncada();
+
+        Http::fake([
+            '*buscojobs.com.uy/ofertas/*' => Http::response($this->htmlConBuildId('build-abc')),
+            '*/_next/data/*/ofertas/*' => Http::response($this->jsonConOfertas([
+                $this->ofertaDeEjemplo(['Descripcion' => $descripcionTruncada]),
+            ])),
+            '*oferta-ID-*' => Http::response('esto no es json valido'),
+        ]);
+
+        $oferta = (new BuscoJobsFuente())->buscar('Programador')[0];
+
+        $this->assertSame($descripcionTruncada, $oferta->descripcionCruda);
+    }
+
+    public function test_descripcion_no_truncada_no_pide_el_detalle(): void
+    {
+        Http::fake([
+            '*buscojobs.com.uy/ofertas/*' => Http::response($this->htmlConBuildId('build-abc')),
+            '*/_next/data/*/ofertas/*' => Http::response($this->jsonConOfertas([
+                $this->ofertaDeEjemplo(['Descripcion' => 'Una descripcion corta y completa.']),
+            ])),
+            '*oferta-ID-*' => Http::response([
+                'pageProps' => ['oferta' => ['Descripcion' => 'No deberia llegar a usarse.']],
+            ]),
+        ]);
+
+        $oferta = (new BuscoJobsFuente())->buscar('Programador')[0];
+
+        $this->assertSame('Una descripcion corta y completa.', $oferta->descripcionCruda);
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'oferta-ID-'));
+    }
+
+    public function test_la_misma_oferta_en_dos_terminos_solo_pide_el_detalle_una_vez(): void
+    {
+        $descripcionCompleta = 'Descripcion completa, obtenida una sola vez para toda la corrida.';
+        $descripcionTruncada = $this->descripcionTruncada();
+
+        Http::fake([
+            '*buscojobs.com.uy/ofertas/*' => Http::response($this->htmlConBuildId('build-abc')),
+            '*/_next/data/*/ofertas/*' => Http::response($this->jsonConOfertas([
+                $this->ofertaDeEjemplo(['IdOferta' => 276036, 'Descripcion' => $descripcionTruncada]),
+            ])),
+            '*oferta-ID-*' => Http::response([
+                'pageProps' => ['oferta' => ['Descripcion' => $descripcionCompleta]],
+            ]),
+        ]);
+
+        // Misma instancia, dos terminos: simula que la oferta 276036
+        // aparece bajo dos terminos semilla en el mismo barrido (la misma
+        // instancia de BuscoJobsFuente que reutiliza BuscadorService::
+        // actualizarFuentes() a lo largo de todos los terminos semilla).
+        $fuente = new BuscoJobsFuente();
+        $primeraCorrida = $fuente->buscar('Programador');
+        $segundaCorrida = $fuente->buscar('Desarrollador');
+
+        $this->assertSame($descripcionCompleta, $primeraCorrida[0]->descripcionCruda);
+        $this->assertSame($descripcionCompleta, $segundaCorrida[0]->descripcionCruda);
+        // 2 corridas x (buildId + listado) = 4, mas el detalle UNA sola vez
+        // (no 2) porque la misma instancia cachea por IdOferta.
+        Http::assertSentCount(5);
+    }
+
+    public function test_el_fallo_del_detalle_de_una_oferta_no_afecta_a_las_demas(): void
+    {
+        $descripcionTruncada = $this->descripcionTruncada();
+
+        Http::fake([
+            '*buscojobs.com.uy/ofertas/*' => Http::response($this->htmlConBuildId('build-abc')),
+            '*/_next/data/*/ofertas/*' => Http::response($this->jsonConOfertas([
+                $this->ofertaDeEjemplo(['IdOferta' => 1, 'CargoVacante' => 'Oferta con detalle caido', 'Descripcion' => $descripcionTruncada]),
+                $this->ofertaDeEjemplo(['IdOferta' => 2, 'CargoVacante' => 'Oferta con detalle ok', 'Descripcion' => $descripcionTruncada]),
+            ])),
+            '*oferta-ID-1*' => Http::response(status: 500),
+            '*oferta-ID-2*' => Http::response([
+                'pageProps' => ['oferta' => ['Descripcion' => 'Descripcion completa de la segunda oferta.']],
+            ]),
+        ]);
+
+        $ofertas = (new BuscoJobsFuente())->buscar('Programador');
+
+        $this->assertCount(2, $ofertas);
+        $this->assertSame($descripcionTruncada, $ofertas[0]->descripcionCruda);
+        $this->assertSame('Descripcion completa de la segunda oferta.', $ofertas[1]->descripcionCruda);
+    }
 }

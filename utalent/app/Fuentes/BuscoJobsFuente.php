@@ -3,8 +3,10 @@
 namespace App\Fuentes;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Throwable;
 
 /**
  * Fuente de empleo privada: BuscoJobs Uruguay (buscojobs.com.uy).
@@ -20,6 +22,16 @@ use RuntimeException;
 class BuscoJobsFuente implements FuenteEmpleoInterface
 {
     private const URL_BASE = 'https://www.buscojobs.com.uy';
+
+    /**
+     * Descripcion completa ya resuelta por IdOferta durante esta ejecucion
+     * (Fase 9.2): evita pedir el detalle dos veces si la misma oferta
+     * aparece bajo mas de un termino semilla en el mismo barrido. Vive
+     * solo mientras viva esta instancia - no es una cache persistente.
+     *
+     * @var array<int|string, ?string>
+     */
+    private array $cacheDescripciones = [];
 
     public function nombre(): string
     {
@@ -68,7 +80,7 @@ class BuscoJobsFuente implements FuenteEmpleoInterface
             throw new RuntimeException('BuscoJobs: la respuesta de busqueda no tiene el formato esperado');
         }
 
-        return array_map($this->aOfertaDTO(...), $ofertas);
+        return array_map(fn (array $oferta) => $this->aOfertaDTO($oferta, $buildId), $ofertas);
     }
 
     /**
@@ -108,7 +120,7 @@ class BuscoJobsFuente implements FuenteEmpleoInterface
         return $normalizado.'_';
     }
 
-    private function aOfertaDTO(array $oferta): OfertaDTO
+    private function aOfertaDTO(array $oferta, string $buildId): OfertaDTO
     {
         return new OfertaDTO(
             externalId: (string) $oferta['IdOferta'],
@@ -122,8 +134,73 @@ class BuscoJobsFuente implements FuenteEmpleoInterface
             url: self::URL_BASE.'/oferta-ID-'.$oferta['IdOferta'],
             fechaPublicacion: $this->aFecha($oferta['FechaInicio'] ?? null),
             fechaCierre: null,
-            descripcionCruda: $this->nuloSiVacio($oferta['Descripcion'] ?? null),
+            descripcionCruda: $this->resolverDescripcion($oferta, $buildId),
         );
+    }
+
+    /**
+     * El listado de busqueda trunca la descripcion a 150 caracteres (Fase
+     * 9.1/9.2: verificado, no es un limite nuestro). Cuando eso pasa, se
+     * intenta reemplazarla por la version completa del endpoint de
+     * detalle; si no se puede, la truncada sigue siendo mejor que nada y
+     * la oferta se guarda igual.
+     */
+    private function resolverDescripcion(array $oferta, string $buildId): ?string
+    {
+        $descripcionListado = $this->nuloSiVacio($oferta['Descripcion'] ?? null);
+        $idOferta = $oferta['IdOferta'];
+
+        if (! $this->pareceTruncada($descripcionListado)) {
+            return $descripcionListado;
+        }
+
+        if (! array_key_exists($idOferta, $this->cacheDescripciones)) {
+            $this->cacheDescripciones[$idOferta] = $this->obtenerDescripcionCompleta($buildId, $idOferta);
+        }
+
+        return $this->cacheDescripciones[$idOferta] ?? $descripcionListado;
+    }
+
+    private function pareceTruncada(?string $descripcion): bool
+    {
+        return $descripcion !== null
+            && mb_strlen($descripcion) >= 150
+            && str_ends_with(rtrim($descripcion), '...');
+    }
+
+    /**
+     * Enriquecimiento opcional, nunca una condicion para guardar la oferta:
+     * timeout corto, sin retry (a diferencia de las otras dos llamadas de
+     * esta clase, esta puede fallar sin perder nada) y cualquier fallo
+     * devuelve null para que resolverDescripcion() conserve la truncada.
+     */
+    private function obtenerDescripcionCompleta(string $buildId, int|string $idOferta): ?string
+    {
+        try {
+            $respuesta = Http::timeout(5)->acceptJson()
+                ->get(self::URL_BASE.'/_next/data/'.rawurlencode($buildId).'/es-UY/oferta-ID-'.rawurlencode((string) $idOferta).'.json');
+        } catch (Throwable $e) {
+            Log::warning("BuscoJobs: no se pudo obtener el detalle de la oferta {$idOferta}, se conserva la descripcion truncada", [
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+
+        if ($respuesta->failed()) {
+            Log::warning("BuscoJobs: el detalle de la oferta {$idOferta} respondio con estado {$respuesta->status()}, se conserva la descripcion truncada");
+
+            return null;
+        }
+
+        $descripcion = $respuesta->json('pageProps.oferta.Descripcion');
+        $descripcion = is_string($descripcion) ? $this->nuloSiVacio($descripcion) : null;
+
+        if ($descripcion === null) {
+            Log::warning("BuscoJobs: el detalle de la oferta {$idOferta} no incluyo una descripcion valida, se conserva la descripcion truncada");
+        }
+
+        return $descripcion;
     }
 
     /** Un empleador confidencial no debe mostrar nombre, tenga o no algo cargado en NombreEmpresa. */
