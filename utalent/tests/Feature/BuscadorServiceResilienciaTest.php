@@ -10,6 +10,7 @@ use App\Repositories\EloquentOfertaRepository;
 use App\Repositories\EloquentSinonimoRepository;
 use App\Services\BuscadorService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Fakes\NormalizadorIANulo;
 use Tests\TestCase;
 
 class BuscadorServiceResilienciaTest extends TestCase
@@ -82,6 +83,7 @@ class BuscadorServiceResilienciaTest extends TestCase
             fuenteRepository: new EloquentFuenteRepository(),
             ofertaRepository: new EloquentOfertaRepository(),
             sinonimoRepository: new EloquentSinonimoRepository(),
+            normalizadorIA: new NormalizadorIANulo(),
         );
 
         $guardadas = $buscadorService->actualizarDesdeTermino('Programador');
@@ -133,6 +135,7 @@ class BuscadorServiceResilienciaTest extends TestCase
             fuenteRepository: new EloquentFuenteRepository(),
             ofertaRepository: new EloquentOfertaRepository(),
             sinonimoRepository: new EloquentSinonimoRepository(),
+            normalizadorIA: new NormalizadorIANulo(),
         );
 
         $guardadas = $buscadorService->actualizarDesdeTermino('Programador');

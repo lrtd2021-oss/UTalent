@@ -14,6 +14,7 @@ class Oferta extends Model
         'fuente_id', 'external_id', 'titulo', 'empresa', 'departamento',
         'es_publico', 'salario_visible', 'salario_texto', 'modalidad', 'url',
         'fecha_publicacion', 'fecha_cierre', 'estado', 'descripcion_cruda',
+        'seniority', 'tecnologias', 'ia_normalizado',
     ];
 
     protected $casts = [
@@ -21,6 +22,8 @@ class Oferta extends Model
         'salario_visible' => 'boolean',
         'fecha_publicacion' => 'date',
         'fecha_cierre' => 'date',
+        'tecnologias' => 'array',
+        'ia_normalizado' => 'boolean',
     ];
 
     public function fuente(): BelongsTo

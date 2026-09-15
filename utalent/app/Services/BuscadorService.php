@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Fuentes\FuenteEmpleoInterface;
+use App\IA\NormalizadorIAInterface;
+use App\Models\Oferta;
 use App\Repositories\FuenteRepositoryInterface;
 use App\Repositories\OfertaRepositoryInterface;
 use App\Repositories\SinonimoRepositoryInterface;
@@ -25,6 +27,7 @@ class BuscadorService
         private readonly FuenteRepositoryInterface $fuenteRepository,
         private readonly OfertaRepositoryInterface $ofertaRepository,
         private readonly SinonimoRepositoryInterface $sinonimoRepository,
+        private readonly NormalizadorIAInterface $normalizadorIA,
     ) {}
 
     /**
@@ -51,8 +54,12 @@ class BuscadorService
 
             try {
                 foreach ($fuenteEmpleo->buscar($termino) as $ofertaDTO) {
-                    $this->ofertaRepository->guardarDesdeFuente($fuente, $ofertaDTO);
+                    $oferta = $this->ofertaRepository->guardarDesdeFuente($fuente, $ofertaDTO);
                     $ofertasGuardadas++;
+
+                    if (! $oferta->ia_normalizado) {
+                        $this->normalizarSiCorresponde($oferta);
+                    }
                 }
             } catch (Throwable $e) {
                 Log::warning("La fuente [{$fuenteEmpleo->nombre()}] fallo al buscar '{$termino}'", [
@@ -62,6 +69,31 @@ class BuscadorService
         }
 
         return $ofertasGuardadas;
+    }
+
+    /**
+     * Intenta enriquecer una oferta via NormalizadorIA. Aislado en su propio
+     * try/catch: si la implementacion de IA llegara a lanzar algo (no
+     * deberia, su contrato es devolver null ante un fallo esperable), no se
+     * pierde el resto del lote de ofertas que se esta procesando. Si la
+     * normalizacion no se pudo completar, la oferta queda con
+     * ia_normalizado=false para reintentarse en una proxima actualizacion.
+     */
+    private function normalizarSiCorresponde(Oferta $oferta): void
+    {
+        try {
+            $normalizada = $this->normalizadorIA->normalizar($oferta->titulo, $oferta->descripcion_cruda);
+        } catch (Throwable $e) {
+            Log::warning("NormalizadorIA fallo de forma inesperada para la oferta [{$oferta->id}]", [
+                'error' => $e->getMessage(),
+            ]);
+
+            return;
+        }
+
+        if ($normalizada !== null) {
+            $this->ofertaRepository->guardarNormalizacion($oferta, $normalizada->seniority, $normalizada->tecnologias);
+        }
     }
 
     /**

@@ -30,6 +30,15 @@ class EloquentOfertaRepository implements OfertaRepositoryInterface
         );
     }
 
+    public function guardarNormalizacion(Oferta $oferta, ?string $seniority, ?array $tecnologias): void
+    {
+        $oferta->update([
+            'seniority' => $seniority,
+            'tecnologias' => $tecnologias,
+            'ia_normalizado' => true,
+        ]);
+    }
+
     public function buscar(array $terminos, array $filtros): LengthAwarePaginator
     {
         return Oferta::with('fuente')
