@@ -23,6 +23,16 @@ class ActualizarOfertasJob implements ShouldQueue
     /** @var array<int, int> Segundos de espera antes de cada reintento. */
     public array $backoff = [30, 120, 300];
 
+    /**
+     * Un solo termino: hasta ~30 ofertas (CntPorPagina de UruguayConcursaFuente)
+     * x 15s de timeout de NormalizadorIA si todas fueran nuevas, mas ~30s de
+     * margen para la llamada a la fuente. En la practica una API que responde
+     * tarda segundos, no el timeout completo; este valor cubre con margen el
+     * caso realista y, si igual se excede, el reintento del Job no duplica
+     * nada porque guardarDesdeFuente es idempotente.
+     */
+    public int $timeout = 600;
+
     public function __construct(public readonly string $termino) {}
 
     public function handle(BuscadorService $buscadorService): void

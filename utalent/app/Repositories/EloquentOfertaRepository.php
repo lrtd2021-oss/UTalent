@@ -39,6 +39,18 @@ class EloquentOfertaRepository implements OfertaRepositoryInterface
         ]);
     }
 
+    public function cerrarNoVistas(Fuente $fuente, array $externalIdsVistos): int
+    {
+        if (empty($externalIdsVistos)) {
+            return 0;
+        }
+
+        return Oferta::where('fuente_id', $fuente->id)
+            ->where('estado', 'activa')
+            ->whereNotIn('external_id', $externalIdsVistos)
+            ->update(['estado' => 'cerrada']);
+    }
+
     public function buscar(array $terminos, array $filtros): LengthAwarePaginator
     {
         return Oferta::with('fuente')

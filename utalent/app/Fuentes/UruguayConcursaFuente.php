@@ -51,7 +51,12 @@ class UruguayConcursaFuente implements FuenteEmpleoInterface
             ->post(self::ENDPOINT, [
                 'llamadosFiltros' => [
                     'PaginaActual' => 1,
-                    'CntPorPagina' => 20,
+                    // 30 da margen sobre el maximo observado hasta ahora
+                    // (~19 para "Programador"): con el cierre automatico de
+                    // ofertas (BuscadorService::actualizarFuentes), traer de
+                    // menos podria hacer que una oferta que sigue abierta
+                    // pero quedo en la pagina 2 se marque "cerrada" por error.
+                    'CntPorPagina' => 30,
                     'Descripcion' => $termino,
                     'ListaLlaEstWeb' => self::ESTADOS_VIGENTES,
                     'ListaAnios' => [$anioActual - 1, $anioActual, $anioActual + 1],

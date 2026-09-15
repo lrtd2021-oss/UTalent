@@ -25,6 +25,22 @@ interface OfertaRepositoryInterface
     public function guardarNormalizacion(Oferta $oferta, ?string $seniority, ?array $tecnologias): void;
 
     /**
+     * Marca como 'cerrada' las ofertas activas de $fuente cuyo external_id no
+     * este en $externalIdsVistos. Pensado para usarse solo despues de un
+     * barrido COMPLETO de todos los terminos semilla de esa fuente (nunca
+     * despues de una busqueda de un solo termino): de lo contrario se
+     * cerrarian ofertas que simplemente pertenecen a otro termino.
+     *
+     * Por seguridad, si $externalIdsVistos viene vacio no cierra nada (evita
+     * que un barrido que no vio nada por error de programacion cierre todo
+     * el historial de la fuente).
+     *
+     * @param  string[]  $externalIdsVistos
+     * @return int cantidad de ofertas cerradas
+     */
+    public function cerrarNoVistas(Fuente $fuente, array $externalIdsVistos): int;
+
+    /**
      * Ofertas activas que coincidan con alguno de los $terminos (titulo) y
      * cumplan los $filtros dados. $terminos vacio no filtra por titulo;
      * $filtros vacio no aplica ningun filtro adicional.

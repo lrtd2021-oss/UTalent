@@ -12,6 +12,9 @@ use App\Repositories\FuenteRepositoryInterface;
 use App\Repositories\OfertaRepositoryInterface;
 use App\Repositories\SinonimoRepositoryInterface;
 use App\Services\BuscadorService;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -43,6 +46,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // No hay autenticacion todavia, asi que se limita por IP. 60/min es
+        // el default que trae el propio scaffolding de Laravel para "api".
+        RateLimiter::for('api', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
     }
 }

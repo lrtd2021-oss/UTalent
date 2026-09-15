@@ -72,6 +72,75 @@ class BuscadorService
     }
 
     /**
+     * Actualizacion completa: recorre TODOS los terminos semilla
+     * (config('buscador.terminos_semilla')) para cada fuente activa y, solo
+     * al terminar de verlos todos, cierra las ofertas de esa fuente que no
+     * aparecieron en ninguno. Es la unica operacion que cierra ofertas: una
+     * busqueda de un solo termino (actualizarDesdeTermino) nunca lo hace,
+     * porque no representa una vista completa de la fuente.
+     *
+     * Si alguno de los terminos falla para una fuente, se omite el cierre de
+     * esa fuente en esta corrida (no se puede afirmar "ya no existe" con
+     * datos parciales) pero las ofertas que si se pudieron traer se guardan
+     * igual.
+     *
+     * @return int cantidad de ofertas guardadas (nuevas o actualizadas)
+     */
+    public function actualizarFuentes(): int
+    {
+        $ofertasGuardadas = 0;
+        $terminosSemilla = config('buscador.terminos_semilla');
+
+        foreach ($this->fuentesEmpleo as $fuenteEmpleo) {
+            $fuente = $this->fuenteRepository->obtenerOCrear(
+                $fuenteEmpleo->nombre(),
+                $fuenteEmpleo->nombreVisible(),
+                $fuenteEmpleo->tipo(),
+            );
+
+            if (! $fuente->activa) {
+                continue;
+            }
+
+            $externalIdsVistos = [];
+            $barridoCompleto = true;
+
+            foreach ($terminosSemilla as $termino) {
+                try {
+                    foreach ($fuenteEmpleo->buscar($termino) as $ofertaDTO) {
+                        $oferta = $this->ofertaRepository->guardarDesdeFuente($fuente, $ofertaDTO);
+                        $externalIdsVistos[] = $ofertaDTO->externalId;
+                        $ofertasGuardadas++;
+
+                        if (! $oferta->ia_normalizado) {
+                            $this->normalizarSiCorresponde($oferta);
+                        }
+                    }
+                } catch (Throwable $e) {
+                    $barridoCompleto = false;
+                    Log::warning("La fuente [{$fuenteEmpleo->nombre()}] fallo al buscar '{$termino}'", [
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            if (! $barridoCompleto) {
+                Log::info("Se omite el cierre de ofertas de [{$fuenteEmpleo->nombre()}]: el barrido de esta corrida no se completo.");
+
+                continue;
+            }
+
+            $cerradas = $this->ofertaRepository->cerrarNoVistas($fuente, array_unique($externalIdsVistos));
+
+            if ($cerradas > 0) {
+                Log::info("Se cerraron {$cerradas} oferta(s) de [{$fuenteEmpleo->nombre()}] que ya no aparecen en la fuente.");
+            }
+        }
+
+        return $ofertasGuardadas;
+    }
+
+    /**
      * Intenta enriquecer una oferta via NormalizadorIA. Aislado en su propio
      * try/catch: si la implementacion de IA llegara a lanzar algo (no
      * deberia, su contrato es devolver null ante un fallo esperable), no se

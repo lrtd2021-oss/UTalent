@@ -1,6 +1,6 @@
 <?php
 
-use App\Jobs\ActualizarOfertasJob;
+use App\Jobs\ActualizarTodasLasFuentesJob;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -9,8 +9,8 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Mantiene actualizadas las ofertas de los terminos semilla (config/buscador.php)
-// sin depender de que un usuario dispare la busqueda.
-foreach (config('buscador.terminos_semilla') as $termino) {
-    Schedule::job(new ActualizarOfertasJob($termino))->everySixHours();
-}
+// Barrido completo (todos los terminos semilla de config/buscador.php) cada
+// 6 horas: mantiene las ofertas al dia y cierra las que ya no aparecen.
+// Un solo Job, no uno por termino, porque el cierre necesita ver el
+// resultado de TODOS los terminos antes de decidir que ya no existe.
+Schedule::job(new ActualizarTodasLasFuentesJob())->everySixHours();

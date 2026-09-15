@@ -70,6 +70,28 @@ class FuenteApiTest extends TestCase
         $this->assertDatabaseHas('fuentes', ['id' => $fuente->id, 'nombre' => 'nombre_original']);
     }
 
+    public function test_acepta_activa_como_cadena_desde_un_cliente_no_json(): void
+    {
+        // Sin postJson(): esto manda form-encoded, como un curl -d comun,
+        // asi que "activa" llega como el string "true"/"false", no como un
+        // booleano real. Reproduce el bug encontrado en la auditoria.
+        $this->post('/api/fuentes', [
+            'nombre' => 'portal_form',
+            'nombre_visible' => 'Portal Form',
+            'tipo' => 'privado',
+            'activa' => 'false',
+        ])->assertCreated()->assertJsonPath('activa', false);
+
+        $fuente = Fuente::where('nombre', 'portal_form')->firstOrFail();
+
+        $this->post("/api/fuentes/{$fuente->id}", [
+            '_method' => 'PUT',
+            'activa' => 'true',
+        ])->assertOk()->assertJsonPath('activa', true);
+
+        $this->assertDatabaseHas('fuentes', ['nombre' => 'portal_form', 'activa' => true]);
+    }
+
     public function test_destroy_hace_baja_logica_y_no_borra_la_fila(): void
     {
         $fuente = Fuente::factory()->create(['activa' => true]);
