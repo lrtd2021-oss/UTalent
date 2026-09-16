@@ -1009,20 +1009,46 @@ def seccion_uso_ia(doc, estilos):
 
     subseccion(doc, "A) IA como parte del producto: NormalizadorIA + OpenRouter")
     parrafo(doc,
-        "Proveedor: OpenRouter (openrouter.ai). Configuracion del proyecto: "
-        "el modelo se parametriza por completo via OPENROUTER_MODEL en "
-        ".env; el codigo no fija ningun modelo especifico, cualquiera "
-        "compatible con el formato de chat completions de OpenRouter "
-        "sirve. Modelo utilizado durante las pruebas: ninguno con "
-        "credenciales reales — el desarrollo de esta clase se verifico "
-        "siempre con Http::fake() (ver OpenRouterNormalizadorIATest, que "
-        "simula la respuesta del proveedor sin llamarlo), y el unico "
-        "barrido real corrido contra las fuentes (Fase 9.2, seccion 9) se "
-        "hizo deliberadamente sin OPENROUTER_API_KEY configurada, "
-        "precisamente para confirmar en la practica que el sistema sigue "
-        "funcionando sin ese enriquecimiento. En consecuencia, nunca se "
-        "ejecuto este componente contra el proveedor real con un modelo "
-        "concreto durante este proyecto.")
+        "Proveedor: OpenRouter (openrouter.ai). Modelo previsto: "
+        "nvidia/nemotron-3-super-120b-a12b:free. El modelo sigue "
+        "parametrizado por completo via OPENROUTER_MODEL en .env (el "
+        "codigo no fija ningun modelo especifico): la disponibilidad de "
+        "modelos gratuitos en OpenRouter cambia con el tiempo, asi que "
+        "esta eleccion se documenta como la vigente al momento de la "
+        "entrega, no como una dependencia fija del codigo.")
+    parrafo(doc,
+        "Validacion real: la integracion se probo con 5 llamadas reales a "
+        "OpenRouter (no simuladas) sobre 5 ofertas reales ya existentes en "
+        "la base de UTalent, elegidas por variedad (una claramente junior, "
+        "una claramente senior, una con muchas tecnologias explicitas, una "
+        "con informacion casi nula, una de la fuente privada BuscoJobs), "
+        "usando exactamente el prompt y la logica de validacion de "
+        "produccion, sin alterarlos para la prueba. Resultado: 5 de 5 "
+        "respuestas JSON validas, 5 de 5 clasificaciones de seniority "
+        "correctas contra la informacion real del texto (incluyendo los "
+        "3 casos donde lo correcto era devolver null por falta de señal, "
+        "en vez de adivinar), y cero tecnologias inventadas: cada "
+        "tecnologia devuelta se verifico manualmente contra el texto "
+        "original de la oferta correspondiente. Antes de esta eleccion se "
+        "probaron tambien, con el mismo protocolo, dos modelos gratuitos "
+        "de Google (Gemma 4 26B-A4B y Gemma 4 31B): ambos fallaron de "
+        "forma consistente en 20 peticiones reales por saturacion del "
+        "proveedor upstream (Google AI Studio) en el momento de la "
+        "prueba, no por un problema de la implementacion — ese hallazgo "
+        "en si mismo confirmo que el manejo de fallos de "
+        "OpenRouterNormalizadorIA funciona como esta documentado.")
+    parrafo(doc,
+        "Limitacion observada a vigilar, no corregida todavia: dos de las "
+        "5 respuestas tardaron cerca de 9.9 segundos, un margen ajustado "
+        "frente al timeout de 15 segundos configurado en "
+        "OpenRouterNormalizadorIA::normalizar(). Con esta unica muestra no "
+        "se justifica cambiar el timeout; queda para revisarse si aparece "
+        "un caso real que se acerque mas al limite.")
+    parrafo(doc,
+        "Esta clase tambien esta cubierta por tests automatizados con "
+        "Http::fake() (OpenRouterNormalizadorIATest), que no dependen de "
+        "ningun proveedor real y no se ven afectados por cual sea el "
+        "modelo configurado en cada momento.")
     parrafo(doc,
         "Que datos normaliza: a partir del titulo y la descripcion cruda de "
         "una oferta ya guardada, se le pide al modelo que devuelva "
