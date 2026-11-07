@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="960" height="400" font-family="Consolas, 'Courier New', monospace" font-size="13">
+  <rect width="960" height="400" fill="#ffffff"/>
+
+  <!-- Entidad: fuentes -->
+  <g transform="translate(40,60)">
+    <rect width="300" height="150" fill="#fff7e8" stroke="#1c2333" stroke-width="1.5"/>
+    <rect width="300" height="32" fill="#f5e2bd" stroke="#1c2333" stroke-width="1.5"/>
+    <text x="150" y="21" text-anchor="middle" font-weight="bold" font-size="14">fuentes</text>
+    <text x="10" y="56"><tspan font-weight="bold">PK</tspan>  id      INT AUTO_INCREMENT</text>
+    <text x="10" y="80">    nombre  VARCHAR(60)</text>
+    <text x="10" y="104">    url     VARCHAR(255)</text>
+    <text x="10" y="128"><tspan font-weight="bold">UK</tspan>  clase   VARCHAR(60)</text>
+  </g>
+
+  <!-- Entidad: ofertas -->
+  <g transform="translate(560,20)">
+    <rect width="370" height="350" fill="#eef3ff" stroke="#1c2333" stroke-width="1.5"/>
+    <rect width="370" height="32" fill="#d9e4ff" stroke="#1c2333" stroke-width="1.5"/>
+    <text x="185" y="21" text-anchor="middle" font-weight="bold" font-size="14">ofertas</text>
+    <text x="10" y="56"><tspan font-weight="bold">PK</tspan>  id                  INT AUTO_INCREMENT</text>
+    <text x="10" y="80"><tspan font-weight="bold">FK</tspan>  fuente_id           INT NULL</text>
+    <text x="10" y="104">    titulo              VARCHAR(255)</text>
+    <text x="10" y="128">    empresa             VARCHAR(255)</text>
+    <text x="10" y="152">    departamento        VARCHAR(40)</text>
+    <text x="10" y="176">    tipo                ENUM(Público,Privado)</text>
+    <text x="10" y="200">    salario             VARCHAR(60) NULL</text>
+    <text x="10" y="224">    postulacion_online  BOOLEAN</text>
+    <text x="10" y="248">    primer_empleo       BOOLEAN</text>
+    <text x="10" y="272"><tspan font-weight="bold">UK</tspan>  enlace              VARCHAR(255) NULL</text>
+    <text x="10" y="296">    fecha               DATE</text>
+    <text x="10" y="320">    vista_en            DATETIME</text>
+  </g>
+
+  <!-- Relación 1 a N (pata de gallo): una fuente publica muchas ofertas -->
+  <g stroke="#1c2333" stroke-width="1.6" fill="none">
+    <line x1="340" y1="135" x2="560" y2="96"/>
+    <!-- extremo "uno" (dos rayas) en fuentes -->
+    <line x1="356" y1="122" x2="359" y2="142"/>
+    <line x1="366" y1="120" x2="369" y2="140"/>
+    <!-- extremo "muchos" (pata de gallo + círculo = cero o muchos) en ofertas -->
+    <line x1="540" y1="100" x2="560" y2="84"/>
+    <line x1="540" y1="100" x2="560" y2="108"/>
+    <circle cx="528" cy="102" r="6" fill="#ffffff"/>
+  </g>
+  <text x="450" y="100" text-anchor="middle" font-family="'Segoe UI', Arial, sans-serif" font-size="13">publica</text>
+  <text x="372" y="160" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#444">1</text>
+  <text x="520" y="128" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#444">0..N</text>
+
+  <text x="40" y="250" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#667085">PK: clave primaria · FK: clave foránea · UK: valor único</text>
+  <text x="40" y="270" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#667085">fuente_id NULL = oferta cargada a mano.</text>
+  <text x="40" y="290" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#667085">ON DELETE CASCADE: al borrar una fuente se borran sus ofertas.</text>
+</svg>

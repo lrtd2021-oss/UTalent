@@ -4,8 +4,9 @@ Buscador de ofertas de empleo para estudiantes de UTU. Junta en un solo lugar lo
 públicos de **Uruguay Concursa** y **UTU**, y las ofertas privadas de **BuscoJobs**, con filtros por
 departamento, tipo (público/privado), salario visible, postulación online y primer empleo.
 
-Hecho con PHP y MySQL sin frameworks, siguiendo el patrón MVC. La fundamentación, el diagrama
-de clases y el uso de IA están en [docs/documentacion.md](docs/documentacion.md).
+Hecho con PHP y MySQL sin frameworks, siguiendo el patrón MVC. El documento de Ingeniería de
+Software (ERS, casos de uso, diseño, pruebas, uso de IA) está en
+[docs/documentacion.pdf](docs/documentacion.pdf); su fuente editable es [docs/documentacion.md](docs/documentacion.md).
 
 ## Cómo ejecutarlo (XAMPP)
 
@@ -34,7 +35,7 @@ Servicios/Utu.php             Lee la API JSON de WordPress de la web de UTU
 Servicios/BuscoJobs.php       Lee el JSON que BuscoJobs incluye en su página
 vistas/                       Las pantallas (HTML con un poco de PHP)
 estilos.css                   Diseño
-docs/                         Documentación y diagrama de clases
+docs/                         Documento de Ingeniería de Software (PDF y fuente) y diagramas
 ```
 
 ## Cómo agregar un portal nuevo
