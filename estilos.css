@@ -1,0 +1,71 @@
+/* Colores de UTalent: se cambian acá y se aplican en toda la página. */
+:root {
+    --fondo: #f4f6fb;
+    --tarjeta: #ffffff;
+    --texto: #1c2333;      /* texto general: oscuro para que se lea sobre el fondo claro */
+    --encabezado: #1c2333; /* fondo de la barra superior (sus letras son blancas) */
+    --suave: #667085;
+    --principal: #1f4fd8;
+    --publico: #0f8a5f;
+    --privado: #b4580e;
+    --peligro: #c62828;
+    --borde: #e3e7ef;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; background: var(--fondo); color: var(--texto); }
+a { color: var(--principal); }
+
+.encabezado { display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; background: var(--encabezado); }
+.encabezado nav a { color: #fff; margin-left: 18px; text-decoration: none; }
+.logo { color: #fff; font-size: 1.5rem; font-weight: 800; text-decoration: none; }
+.logo span { color: #7fa2ff; }
+
+.contenedor { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+.portada { text-align: center; margin-bottom: 20px; }
+.portada h1 { margin: 0 0 6px; font-size: 2rem; }
+.portada p, .cantidad, .pie { color: var(--suave); }
+.mensaje { background: #e8efff; border-left: 4px solid var(--principal); padding: 10px 14px; border-radius: 6px; }
+
+/* Formularios y botones */
+input, select, button { font: inherit; padding: 9px 12px; border: 1px solid var(--borde); border-radius: 8px; }
+button { background: var(--principal); color: #fff; border: none; cursor: pointer; }
+button:hover { opacity: .9; }
+button.peligro { background: var(--peligro); padding: 6px 10px; }
+label { display: flex; align-items: center; gap: 6px; color: var(--suave); }
+
+.filtros { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: var(--tarjeta); padding: 16px; border-radius: 12px; margin-bottom: 16px; }
+.filtros input[type=search] { flex: 1 1 260px; }
+
+/* Tarjetas de ofertas: tantas columnas como entren, mínimo 280px cada una */
+.ofertas { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.oferta, .tarjeta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 18px; }
+.oferta { display: flex; flex-direction: column; overflow-wrap: anywhere; } /* corta palabras muy largas en vez de desbordar */
+/* Los títulos de UTU son muy largos: se muestran 3 líneas y el resto se ve al pasar el mouse */
+.oferta h2 { font-size: 1.05rem; margin: 8px 0 4px; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden; }
+.oferta .empresa { margin: 0 0 10px; color: var(--suave); }
+.oferta .datos { list-style: none; padding: 0; margin: 0 0 14px; font-size: .9rem; line-height: 1.7; }
+.oferta footer { margin-top: auto; display: flex; justify-content: space-between; align-items: center; color: var(--suave); }
+.etiqueta { align-self: flex-start; font-size: .75rem; font-weight: 700; padding: 3px 8px; border-radius: 20px; color: #fff; }
+.publico { background: var(--publico); }
+.privado { background: var(--privado); }
+
+/* Panel de administración */
+.admin { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 16px; align-items: start; }
+.tarjeta h1 { font-size: 1.15rem; margin-top: 0; }
+.formulario { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.formulario h1, .formulario input[name=titulo] { grid-column: 1 / -1; }
+.login { max-width: 360px; margin: 40px auto; display: grid; gap: 12px; }
+.tabla { overflow-x: auto; background: var(--tarjeta); border-radius: 12px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--borde); }
+.acciones { display: flex; gap: 10px; align-items: center; }
+
+.pie { text-align: center; padding: 24px; font-size: .85rem; }
+
+/* Celulares: todo en una columna */
+@media (max-width: 700px) {
+    .admin, .formulario { grid-template-columns: 1fr; }
+    .encabezado { flex-direction: column; gap: 8px; }
+    .encabezado nav a { margin: 0 8px; }
+}
