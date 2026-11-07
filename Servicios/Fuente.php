@@ -44,8 +44,9 @@ abstract class Fuente {
         return $encontrados[0] ?? 'Sin especificar';
     }
 
+    // "\u{AD}" es un guion invisible que algunos portales meten dentro de las palabras ("Rí­o").
     private function sinTildes(string $texto): string {
         return strtolower(strtr($texto, ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u',
-            'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u']));
+            'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u', "\u{AD}" => '']));
     }
 }
